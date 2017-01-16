@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from abc import abstractproperty
-from types import FunctionType
+from types import FunctionType, MethodType
 
 """ Exposes abstract base meta class to be inherited by inheritance-style meta classes.
 
@@ -8,7 +8,7 @@ from types import FunctionType
     properties, methods (including classmethod, staticmethod, decorated methods)
 
     This merge-style must be implemented via the static methods `class_doc_inherit`
-    and `attr_doc_inherit`. See custom_inherit/style_store.py for such implementations."""
+    and `attr_doc_inherit`. See custom_inherit/_style_store.py for such implementations."""
 
 __all__ = ["DocInheritorBase"]
 
@@ -33,7 +33,7 @@ class DocInheritorBase(type):
 
         # inherit docstring for method, static-method, class-method, abstract-method, decorated-method, and property
         for attr, attribute in class_dict.items():
-            is_doc_type = isinstance(attribute, (FunctionType, classmethod, staticmethod, property))
+            is_doc_type = isinstance(attribute, (FunctionType, MethodType, classmethod, staticmethod, property))
 
             if (attr.startswith("__") and attr.endswith("__")) or not is_doc_type:
                 continue
@@ -56,7 +56,7 @@ class DocInheritorBase(type):
             try:
                 child_attr.__doc__ = doc
             except TypeError as err:
-                if isinstance(child_attr, property):  # property.__doc__ is read-only in Python 2
+                if type(child_attr) in (property, abstractproperty):  # property.__doc__ is read-only in Python 2
                     new_prop = property(fget=child_attr.fget,
                                         fset=child_attr.fset,
                                         fdel=child_attr.fdel,
